@@ -1,0 +1,6 @@
+{
+  "name": "Castro Melo Advogados",
+  "description": "Sistema de gestão jurídica integrada para Castro Melo Advogados, com controle de clientes, processos, controladoria em Kanban, fluxo financeiro integrado e relatórios de analytics de BI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
