@@ -8,7 +8,8 @@ import {
   BarChart3, 
   Menu, 
   X, 
-  RefreshCw 
+  RefreshCw,
+  Heart
 } from "lucide-react";
 import { resetAllStorage } from "../data";
 
@@ -27,6 +28,7 @@ export default function Sidebar({ currentTab, setCurrentTab, mobileOpen, setMobi
     { id: "financeiro", label: "Financeiro", icon: CreditCard },
     { id: "modelos", label: "Modelos e Peças", icon: FileText },
     { id: "controladoria", label: "Controladoria", icon: ClipboardList },
+    { id: "sucesso_cliente", label: "Sucesso do Cliente", icon: Heart },
     { id: "analytics", label: "Analytics & BI", icon: BarChart3 },
   ];
 

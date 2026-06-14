@@ -10,8 +10,10 @@ import {
   X, 
   Check, 
   ArrowUpRight, 
-  Coins 
+  Coins,
+  FileDown
 } from "lucide-react";
+import { jsPDF } from "jspdf";
 import { Transaction, Invoice } from "../types";
 
 interface FinanceiroViewProps {
@@ -68,6 +70,167 @@ export default function FinanceiroView({
     }, 1200);
   };
 
+  // PDF Export Generation for Financial Transactions
+  const handleExportPDF = () => {
+    const doc = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4"
+    });
+
+    // Institutional Banner/Header
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.setTextColor(5, 8, 12); // #05080c
+    doc.text("CASTRO MELO ADVOGADOS", 20, 20);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(110, 110, 110);
+    doc.text("Assessoria Corporativa • Contencioso de Alto Impacto • Ambiental", 20, 25);
+    doc.text("Av. Brigadeiro Faria Lima, 3400 - São Paulo/SP | contato@castromelo.com.br", 20, 29);
+    
+    // Separation line
+    doc.setDrawColor(200, 200, 200);
+    doc.line(20, 33, 190, 33);
+
+    // Title of dynamic report document
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(28, 32, 37); // #1c2025
+    doc.text("RELATÓRIO FINANCEIRO & HISTÓRICO DE LANÇAMENTOS DO LIVRO CAIXA", 20, 42);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(70, 70, 70);
+    doc.text(`Período de Emissão: ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR")}`, 20, 47);
+    doc.text("Diretor Sócio Emissor: Dr. Hilário de Castro Melo Jr.", 20, 52);
+
+    // Beautiful Gray Banner for Scorecard/KPI summary block
+    doc.setFillColor(243, 244, 246);
+    doc.rect(20, 56, 170, 21, "F");
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7.5);
+    doc.setTextColor(110, 110, 110);
+    doc.text("FATURAMENTO BRUTO", 25, 61);
+    doc.text("DESPESAS OPERACIONAIS", 82, 61);
+    doc.text("FATURAMENTO LÍQUIDO", 140, 61);
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10.5);
+    doc.setTextColor(22, 163, 74); // green-600
+    doc.text(`R$ ${totalRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 25, 68);
+
+    doc.setTextColor(220, 38, 38); // red-600
+    doc.text(`R$ ${totalExpenses.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 82, 68);
+
+    doc.setTextColor(18, 28, 42); // slate dark
+    doc.text(`R$ ${defaultBalance.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 140, 68);
+
+    // Main ledger details label
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(28, 32, 37);
+    doc.text("LIVRO CAIXA - DETALHAMENTO DAS TRANSAÇÕES", 20, 85);
+
+    // Table view header section
+    doc.setFillColor(28, 32, 37); // #1c2025 dark slate header
+    doc.rect(20, 89, 170, 7.5, "F");
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(255, 255, 255);
+    doc.text("DATA", 23, 94);
+    doc.text("DESCRIÇÃO DA OPERAÇÃO", 44, 94);
+    doc.text("CATEGORIA", 112, 94);
+    doc.text("STATUS", 144, 94);
+    doc.text("VALOR (R$)", 187, 94, { align: "right" });
+
+    let currentY = 101;
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(50, 50, 50);
+
+    transactions.forEach((t, i) => {
+      // Zebra backgrounds
+      if (i % 2 === 0) {
+        doc.setFillColor(249, 250, 251);
+        doc.rect(20, currentY - 4.5, 170, 6.5, "F");
+      }
+
+      // Border floor
+      doc.setDrawColor(240, 240, 240);
+      doc.line(20, currentY + 2, 190, currentY + 2);
+
+      const formattedDate = t.date.split("-").reverse().join("/");
+      doc.text(formattedDate, 23, currentY);
+
+      let truncatedDesc = t.description;
+      if (truncatedDesc.length > 37) {
+        truncatedDesc = truncatedDesc.substring(0, 34) + "...";
+      }
+      doc.text(truncatedDesc, 44, currentY);
+      doc.text(t.category, 112, currentY);
+      doc.text(t.status, 144, currentY);
+
+      const isRevenue = t.category === "Receita";
+      doc.setFont("helvetica", "bold");
+      if (isRevenue) {
+        doc.setTextColor(22, 163, 74); // green
+      } else {
+        doc.setTextColor(220, 38, 38); // red
+      }
+      const printedValue = `${isRevenue ? "+" : "-"} R$ ${Math.abs(t.value).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      doc.text(printedValue, 187, currentY, { align: "right" });
+
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(50, 50, 50);
+
+      currentY += 6.5;
+
+      // Wrap page logic
+      if (currentY > 272) {
+        doc.addPage();
+        currentY = 25;
+
+        // Print header columns on consecutive pages too
+        doc.setFillColor(28, 32, 37);
+        doc.rect(20, 10, 170, 7.5, "F");
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8);
+        doc.setTextColor(255, 255, 255);
+        doc.text("DATA", 23, 15);
+        doc.text("DESCRIÇÃO DA OPERAÇÃO", 44, 15);
+        doc.text("CATEGORIA", 112, 15);
+        doc.text("STATUS", 144, 15);
+        doc.text("VALOR (R$)", 187, 15, { align: "right" });
+
+        currentY = 22;
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(50, 50, 50);
+      }
+    });
+
+    // Set precise footer positioning
+    let finalFooterY = Math.min(currentY + 12, 276);
+    doc.setDrawColor(200, 200, 200);
+    doc.line(20, finalFooterY - 3, 190, finalFooterY - 3);
+
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(8);
+    doc.setTextColor(80, 80, 80);
+    doc.text("Desenvolvido por Rômulo Chaves - SerClin Tech", 20, finalFooterY + 3);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    doc.setTextColor(150, 150, 150);
+    doc.text("Este documento constitui extrato confidencial emitido por Castro Melo Advogados e auditado por SerClin Tech.", 20, finalFooterY + 7);
+
+    // Trigger vector PDF download save
+    doc.save(`relatorio_financeiro_castro_melo_${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
   const handleAddTransaction = (e: FormEvent) => {
     e.preventDefault();
     if (!description.trim() || !value.trim()) return;
@@ -111,6 +274,15 @@ export default function FinanceiroView({
           >
             <RefreshCw className={`h-3.5 w-3.5 text-gray-500 ${isSyncing ? "animate-spin" : ""}`} />
             <span>Sincronizar Asaas</span>
+          </button>
+
+          <button
+            onClick={handleExportPDF}
+            className="flex items-center gap-1.5 px-4 py-2 bg-[#d6e0f4] text-[#121c2a] border border-[#bdc7db] rounded-lg text-xs font-bold hover:bg-[#bdc7db] transition-all shadow-sm cursor-pointer"
+            id="btn-export-pdf"
+          >
+            <FileDown className="h-4 w-4" />
+            <span>Exportar PDF</span>
           </button>
 
           <button

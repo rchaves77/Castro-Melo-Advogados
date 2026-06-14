@@ -27,6 +27,26 @@ export default function ModelosView({ templates, setTemplates }: ModelosViewProp
   const [editorContent, setEditorContent] = useState<string>("");
   const [isNewTemplateModalOpen, setIsNewTemplateModalOpen] = useState<boolean>(false);
 
+  // WYSIWYG Editor custom formatting properties
+  const [selectedLetterhead, setSelectedLetterhead] = useState<"CastroMelo" | "Moderno" | "Brasao" | "Nenhum">("CastroMelo");
+  const [selectedFont, setSelectedFont] = useState<"font-sans" | "font-serif" | "font-mono">("font-serif");
+  const [selectedSize, setSelectedSize] = useState<"text-[10px]" | "text-xs" | "text-sm" | "text-base">("text-xs");
+  const [selectedMargin, setSelectedMargin] = useState<"p-4" | "p-8" | "p-12" | "p-16">("p-12");
+  const [selectedAlign, setSelectedAlign] = useState<"text-justify" | "text-left" | "text-right">("text-justify");
+
+  // Legal snippets
+  const LEGAL_SNIPPETS = [
+    { label: "Preâmbulo Inicial", value: "\n\nREQUERENTE (Qualificação civil conforme art. 319 CPC), inscrito no CPF sob o nº ..., residente e domiciliado na ..., por intermédio de seu Advogado infra-assinado, com procuração anexa e escritório profissional em ..., local de recebimento de intimações, vem perante Vossa Excelência propor a presente..." },
+    { label: "Seção Dos Fatos", value: "\n\nI – DOS FATOS EM SÍNTESE:\nO Requerente celebrou avença na data de ... cujo escopo pactuado visava ... Ocorre que, em total inobservância aos deveres e diretrizes fundamentais do pacto..." },
+    { label: "Seção Do Direito", value: "\n\nII – DO EMBASAMENTO JURÍDICO:\nA pretensão do Requerente é categoricamente amparada pela inteligência do Artigo 389 e caput do Código Civil, de modo que aquele que descumprir obrigação voluntária submete-se ao dever de ressarcimento..." },
+    { label: "Pedidos & Sucumbências", value: "\n\nIII – DOS PEDIDOS:\nDiante de todo o exposto, pugna o Autor pela procedência integral para:\na) A citação da Requerida para manifestação sob revelia;\nb) Condenação ao ressarcimento por perdas e danos;\nc) Arbitramento de honorários em 20% do proveito econômico obtido." },
+    { label: "Fechamento OAB", value: "\n\nNesses termos, confia no deferimento.\nSão Paulo, 14 de Junho de 2026.\n\n___________________________________\nDRA. CAROLINE MELO DE CASTRO\nAdvogada Associada - OAB/SP 412.345" }
+  ];
+
+  const insertSnippet = (snippetText: string) => {
+    setEditorContent(prev => prev + snippetText);
+  };
+
   // New template states
   const [newTitle, setNewTitle] = useState("");
   const [newCat, setNewCat] = useState<"Petições Iniciais" | "Contratos" | "Recursos" | "Contestações" | "Procurações">("Petições Iniciais");
@@ -210,9 +230,9 @@ export default function ModelosView({ templates, setTemplates }: ModelosViewProp
         {/* RIGHT column: Document Clause Viewer / Editor (Extremely premium!) */}
         <div className="lg:col-span-7 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col h-[calc(100vh-270px)]" id="template-clause-editor">
           {selectedTemplate ? (
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col h-full bg-[#f4f6f8]">
               {/* Header tools */}
-              <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50 flex-shrink-0">
+              <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-white flex-shrink-0 shadow-sm z-10">
                 <div className="flex items-center gap-3">
                   <BookOpen className="h-5 w-5 text-gray-500" />
                   <div>
@@ -248,7 +268,7 @@ export default function ModelosView({ templates, setTemplates }: ModelosViewProp
                       onClick={saveEdit}
                       className="px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-md text-[11px] font-bold transition-all shadow-md cursor-pointer"
                     >
-                      Salvar Cláusula
+                      Salvar Peça
                     </button>
                   ) : (
                     <button
@@ -256,26 +276,158 @@ export default function ModelosView({ templates, setTemplates }: ModelosViewProp
                       className="flex items-center gap-1 px-3 py-1.5 border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 rounded-md text-[11px] font-bold transition-all shadow-sm cursor-pointer"
                     >
                       <Edit className="h-3.5 w-3.5" />
-                      <span>Editar Minuta</span>
+                      <span>Configurar & Editar</span>
                     </button>
                   )}
                 </div>
               </div>
 
-              {/* Editable/Readable Body workspace */}
-              <div className="flex-1 p-6 overflow-y-auto bg-gray-50/80 font-mono text-[11px] leading-relaxed select-text" id="document-textarea-wrapper">
-                {isEditing ? (
-                  <textarea
-                    value={editorContent}
-                    onChange={(e) => setEditorContent(e.target.value)}
-                    className="w-full h-full bg-white p-4 border border-gray-300 rounded-lg shadow-inner outline-none font-mono resize-none text-[11px] leading-relaxed text-gray-800"
-                    id="editor-textarea-field"
-                  />
-                ) : (
-                  <pre className="whitespace-pre-wrap text-gray-700 bg-white border border-gray-200 rounded-lg p-6 font-mono leading-relaxed select-text">
-                    {selectedTemplate.content}
-                  </pre>
-                )}
+              {/* WYSIWYG Formatting controls (Shown when in editor or view mode for beautiful styling!) */}
+              <div className="bg-gray-50 border-b border-gray-200 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 flex-shrink-0 text-[10px]">
+                {/* Configuration inputs */}
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Select font selectbox */}
+                  <div className="flex items-center bg-white border border-gray-200 rounded px-2 py-1">
+                    <span className="text-gray-400 mr-1.5 font-bold">Fonte:</span>
+                    <select
+                      value={selectedFont}
+                      onChange={(e: any) => setSelectedFont(e.target.value)}
+                      className="bg-transparent border-none p-0 outline-none font-bold text-gray-700 h-4 text-[10px]"
+                    >
+                      <option value="font-sans">Inter (Moderno)</option>
+                      <option value="font-serif">Garamond (Fórum)</option>
+                      <option value="font-mono">Mono (Técnico)</option>
+                    </select>
+                  </div>
+
+                  {/* Size switcher */}
+                  <div className="flex items-center bg-white border border-gray-200 rounded px-2 py-1">
+                    <span className="text-gray-400 mr-1.5 font-bold">Meta-Tamanho:</span>
+                    <select
+                      value={selectedSize}
+                      onChange={(e: any) => setSelectedSize(e.target.value)}
+                      className="bg-transparent border-none p-0 outline-none font-bold text-gray-700 h-4 text-[10px]"
+                    >
+                      <option value="text-[10px]">Pequeno (10pt)</option>
+                      <option value="text-xs">Normal (12pt)</option>
+                      <option value="text-sm">Médio (14pt)</option>
+                      <option value="text-base">Grande (16pt)</option>
+                    </select>
+                  </div>
+
+                  {/* Margin switcher */}
+                  <div className="flex items-center bg-white border border-gray-200 rounded px-2 py-1">
+                    <span className="text-gray-400 mr-1.5 font-bold">Margens:</span>
+                    <select
+                      value={selectedMargin}
+                      onChange={(e: any) => setSelectedMargin(e.target.value)}
+                      className="bg-transparent border-none p-0 outline-none font-bold text-gray-700 h-4 text-[10px]"
+                    >
+                      <option value="p-4">Estreita (1.5cm)</option>
+                      <option value="p-8">Padrão (2.0cm)</option>
+                      <option value="p-12">Fórum Ampla (3.0cm)</option>
+                      <option value="p-16">Especial (4.0cm)</option>
+                    </select>
+                  </div>
+
+                  {/* Letterhead selector */}
+                  <div className="flex items-center bg-white border border-gray-200 rounded px-2 py-1">
+                    <span className="text-gray-400 mr-1.5 font-bold">Papel Timbrado:</span>
+                    <select
+                      value={selectedLetterhead}
+                      onChange={(e: any) => setSelectedLetterhead(e.target.value)}
+                      className="bg-transparent border-none p-0 outline-none font-bold text-[#1c2025] h-4 text-[10px]"
+                    >
+                      <option value="CastroMelo">Premium Castro Melo</option>
+                      <option value="Moderno">Moderno C&M</option>
+                      <option value="Brasao">Brasão Tribunal SP</option>
+                      <option value="Nenhum">Sem Timbre</option>
+                    </select>
+                  </div>
+
+                  {/* Text alignments */}
+                  <div className="flex items-center bg-white border border-gray-200 rounded p-1 gap-1">
+                    {(["text-left", "text-justify", "text-right"] as const).map((ali) => (
+                      <button
+                        key={ali}
+                        onClick={() => setSelectedAlign(ali)}
+                        className={`px-2 py-0.5 rounded text-[9px] font-bold ${
+                          selectedAlign === ali ? "bg-gray-800 text-white" : "text-gray-400 hover:text-gray-700"
+                        }`}
+                      >
+                        {ali === "text-left" ? "Esq." : ali === "text-right" ? "Dir." : "Justif."}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Component Pieces Injector Sidebar (only visible when editing) */}
+              {isEditing && (
+                <div className="bg-[#1c2025] text-white px-4 py-2 border-b border-gray-800 overflow-x-auto flex items-center gap-1.5 shrink-0" id="snippets-injector-shelf">
+                  <span className="text-[10px] font-black tracking-wider text-slate-400 uppercase mr-1 whitespace-nowrap">Inserir Peça Reutilizável:</span>
+                  {LEGAL_SNIPPETS.map((snip) => (
+                    <button
+                      key={snip.label}
+                      type="button"
+                      onClick={() => insertSnippet(snip.value)}
+                      className="px-2.5 py-1 bg-white/10 hover:bg-[#d6e0f4] hover:text-[#1c2025] font-bold rounded text-[9px] border border-white/5 transition-all whitespace-nowrap cursor-pointer"
+                    >
+                      + {snip.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Editable/Readable Body workspace (Styled inside real paper mockup) */}
+              <div className="flex-grow p-4 md:p-6 overflow-y-auto select-text bg-[#eaedf1]" id="document-paper-container">
+                <div className="bg-white mx-auto shadow-2xl rounded border border-gray-200 max-w-[700px] min-h-[85vh] flex flex-col p-6 md:p-10 relative font-sans transition-all">
+                  
+                  {/* Real Letterhead renderer inside paper */}
+                  {selectedLetterhead === "CastroMelo" && (
+                    <div className="border-b-2 border-amber-600 pb-3 mb-6 text-center select-none" id="letterhead-castromelo">
+                      <h1 className="font-serif tracking-widest text-[#05080c] font-bold text-base uppercase">Castro Melo Advogados</h1>
+                      <p className="text-[8px] tracking-wider text-gray-500 uppercase font-semibold">Assessoria Corporativa • Contencioso de Alto Impacto • Ambiental</p>
+                      <div className="text-[8px] text-gray-400 mt-0.5 font-mono">Av. Brigadeiro Faria Lima, 3400 - São Paulo/SP | contato@castromelo.com.br</div>
+                    </div>
+                  )}
+
+                  {selectedLetterhead === "Moderno" && (
+                    <div className="border-l-4 border-[#121c2a] pl-3 pb-1 mb-6 text-left select-none" id="letterhead-moderno">
+                      <h1 className="font-sans font-black tracking-tight text-[#1c2025] text-sm uppercase leading-none">C&M ADVOGADOS ASSOCIADOS</h1>
+                      <p className="text-[8px] text-slate-500 font-bold uppercase tracking-wider mt-1">São Paulo • Brasília • Rio de Janeiro</p>
+                    </div>
+                  )}
+
+                  {selectedLetterhead === "Brasao" && (
+                    <div className="border-b border-gray-200 pb-3 mb-6 text-center flex flex-col items-center select-none" id="letterhead-brasao">
+                      <div className="w-6 h-6 bg-amber-50 border border-amber-200 rounded-full flex items-center justify-center text-[8px] font-black text-amber-700 shadow-sm leading-none mb-1">
+                        SP
+                      </div>
+                      <h1 className="font-serif tracking-normal text-zinc-800 text-[10px] uppercase font-bold">Poder Judiciário do Estado de São Paulo</h1>
+                      <p className="text-[8px] text-zinc-400 font-sans tracking-wide">Fórum de Primeira Instância - Cível Central da Capital</p>
+                    </div>
+                  )}
+
+                  {/* Body text area / printable document layer */}
+                  <div className="flex-1 flex flex-col">
+                    {isEditing ? (
+                      <textarea
+                        value={editorContent}
+                        onChange={(e) => setEditorContent(e.target.value)}
+                        className={`w-full flex-grow bg-white focus:outline-none placeholder-gray-300 resize-none rounded-lg text-gray-800 ${selectedFont} ${selectedSize} ${selectedAlign} leading-relaxed h-[60vh]`}
+                        id="editor-textarea-field"
+                        placeholder="Escreva a petição ou minuta aqui. Utilize a barra superior para inserir cabeçalhos, margens e componentes reutilizáveis de peças..."
+                      />
+                    ) : (
+                      <div className="whitespace-pre-wrap select-text h-full" id="templates-view-workspace">
+                        <pre className={`whitespace-pre-wrap text-gray-700 bg-white leading-relaxed ${selectedFont} ${selectedSize} ${selectedAlign} ${selectedMargin}`}>
+                          {selectedTemplate.content}
+                        </pre>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           ) : (

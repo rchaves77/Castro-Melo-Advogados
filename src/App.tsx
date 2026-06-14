@@ -26,6 +26,7 @@ import ControladoriaView from "./components/ControladoriaView";
 import FinanceiroView from "./components/FinanceiroView";
 import ModelosView from "./components/ModelosView";
 import AnalyticsView from "./components/AnalyticsView";
+import SuccessConsultantView from "./components/SuccessConsultantView";
 
 import { 
   getClients, saveClients, 
@@ -57,6 +58,7 @@ export default function App() {
 
   // Load initial seed state from storage
   useEffect(() => {
+    document.title = "Castro Melo";
     setClientsState(getClients());
     setProcessesState(getProcesses());
     setKanbanTasksState(getKanbanTasks());
@@ -255,14 +257,14 @@ export default function App() {
                 id="header-user-profile-trigger"
               >
                 <img 
-                  alt="Dr. Rafael Castro Melo" 
+                  alt="Dr. Hilário de Castro Melo Jr" 
                   className="h-8.5 w-8.5 rounded-full object-cover border border-gray-200 shadow" 
                   src={portraitUrl}
                   referrerPolicy="no-referrer"
                 />
                 
                 <div className="text-left hidden sm:block">
-                  <p className="text-xs font-bold text-gray-900 leading-snug">Dr. Rafael Melo</p>
+                  <p className="text-xs font-bold text-gray-900 leading-snug">Dr. Hilário Melo</p>
                   <p className="text-[9px] text-gray-400 uppercase tracking-wider font-bold">Sócio Diretor</p>
                 </div>
 
@@ -276,8 +278,8 @@ export default function App() {
                   id="profile-popover"
                 >
                   <div className="p-4 border-b border-gray-100 bg-[#1c2025] text-white">
-                    <p className="font-bold">Dr. Rafael Castro Melo</p>
-                    <p className="text-[10px] text-gray-400 mt-0.5">OAB/SP 412.345</p>
+                    <p className="font-bold">Dr. Hilário de Castro Melo Jr</p>
+                    <p className="text-[10px] text-gray-400 mt-0.5">OAB/SP 123.456</p>
                   </div>
                   
                   <div className="p-2 space-y-1">
@@ -358,10 +360,21 @@ export default function App() {
             />
           )}
 
+          {currentTab === "sucesso_cliente" && (
+            <SuccessConsultantView 
+              clients={clients}
+            />
+          )}
+
           {currentTab === "analytics" && (
             <AnalyticsView />
           )}
         </main>
+
+        {/* Universal Footer Credits */}
+        <footer className="py-4 border-t border-gray-200 bg-white text-center text-[10px] text-gray-500 font-sans tracking-widest uppercase font-bold select-none mt-auto" id="app-footer-credits">
+          Desenvolvido por Rômulo Chaves - SerClin Tech
+        </footer>
       </div>
 
     </div>

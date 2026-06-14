@@ -207,7 +207,23 @@ export default function ControladoriaView({ kanbanTasks, setKanbanTasks, clients
             return (
               <div 
                 key={col.id} 
-                className="flex-1 min-w-[280px] bg-gray-50 border border-gray-200 rounded-xl flex flex-col max-h-full overflow-hidden shadow-sm"
+                onDragOver={(e) => {
+                  e.preventDefault();
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const taskId = e.dataTransfer.getData("text/plain");
+                  if (taskId) {
+                    const updated = kanbanTasks.map(t => {
+                      if (t.id === taskId) {
+                        return { ...t, column: col.id as any };
+                      }
+                      return t;
+                    });
+                    setKanbanTasks(updated);
+                  }
+                }}
+                className="flex-1 min-w-[280px] bg-gray-50 border border-gray-200 rounded-xl flex flex-col max-h-full overflow-hidden shadow-sm transition-all hover:border-blue-300"
                 id={`kanban-column-card-${col.id}`}
               >
                 {/* Column header */}
@@ -221,10 +237,10 @@ export default function ControladoriaView({ kanbanTasks, setKanbanTasks, clients
                 </div>
 
                 {/* Task card list inside column */}
-                <div className="flex-grow overflow-y-auto p-4 space-y-4" id={`kanban-column-[${col.id}]-tasks`}>
+                <div className="flex-grow overflow-y-auto p-4 space-y-4 font-sans" id={`kanban-column-[${col.id}]-tasks`}>
                   {colTasks.length === 0 ? (
                     <div className="h-32 border-2 border-dashed border-gray-200 rounded-xl flex items-center justify-center text-center p-6 text-gray-400 text-xs font-sans">
-                      Arraste ou clique para mover tarefas para esta coluna
+                      Arraste ou use botões para mover tarefas para esta coluna
                     </div>
                   ) : (
                     colTasks.map((task) => {
@@ -232,7 +248,11 @@ export default function ControladoriaView({ kanbanTasks, setKanbanTasks, clients
                       return (
                         <div
                           key={task.id}
-                          className={`bg-white rounded-lg p-4 border border-gray-200 shadow-sm transition-all duration-200 hover:shadow-md cursor-pointer hover:-translate-y-0.5 border-l-4 ${
+                          draggable
+                          onDragStart={(e) => {
+                            e.dataTransfer.setData("text/plain", task.id);
+                          }}
+                          className={`bg-white rounded-lg p-4 border border-gray-200 shadow-sm transition-all duration-200 hover:shadow-md cursor-grab active:cursor-grabbing hover:-translate-y-0.5 border-l-4 ${
                             isUrgent 
                               ? "border-l-red-500" 
                               : task.badge === "Intimação"
